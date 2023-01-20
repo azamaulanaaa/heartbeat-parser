@@ -3,8 +3,8 @@ use regex::Regex;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct File {
-    server_id: String,
-    file_id: String,
+    pub server_id: String,
+    pub file_id: String,
 }
 
 impl TryFrom<&str> for File {
@@ -43,15 +43,6 @@ impl Into<String> for File {
     }
 }
 
-fn get_filename<'a>(problem: &'a str) -> Result<String> {
-    let re = Regex::new(r#""/([\w\d_\-\.]+)""#).unwrap();
-    let cap = match re.captures(problem) {
-        Some(val) => val,
-        None => return Err(anyhow!("unable to recognize the problem.")),
-    };
-    Ok(String::from(&cap[1]))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -75,6 +66,7 @@ mod tests {
             let result = File::try_from(testcase.src)?;
             assert_eq!(result, testcase.file);
         }
+
         Ok(())
     }
 
@@ -99,8 +91,9 @@ mod tests {
         }
         Ok(())
     }
+
     #[test]
-    fn id_into_string() -> Result<()> {
+    fn file_into_string() -> Result<()> {
         struct TestCase {
             file: File,
             result: String,
@@ -117,28 +110,6 @@ mod tests {
         for testcase in testcases {
             let result: String = testcase.file.into();
             assert_eq!(result, testcase.result);
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn get_filename_test() -> Result<()> {
-        struct TestCase<'a> {
-            problem: &'a str,
-            solution: String,
-        }
-        let function = get_filename;
-
-        let testcases = [
-            TestCase {
-                problem: "\n\n\n<script type=\"text/javascript\">\n    document.getElementById('dlbutton').href = \"/d/UfqlE33b/\" + (690628 % 51245 + 690628 % 913) + \"/Screenshot_20230113_040647.png\";\n    if (document.getElementById('fimage')) {\n        document.getElementById('fimage').href = \"/i/UfqlE33b/\" + (690628 % 51245 + 690628 % 913) + \"/Screenshot_20230113_040647.png\";\n    }\n</script>",
-                solution: String::from("Screenshot_20230113_040647.png"),
-            },
-        ];
-
-        for testcase in testcases {
-            let solution = function(testcase.problem);
-            assert_eq!(solution?, testcase.solution);
         }
         Ok(())
     }
