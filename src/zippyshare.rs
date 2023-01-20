@@ -1,13 +1,13 @@
 use anyhow::{anyhow, Error, Result};
 use regex::Regex;
 
-#[derive(Debug, PartialEq)]
-pub struct ID {
+#[derive(Debug, PartialEq, Clone)]
+pub struct File {
     server_id: String,
     file_id: String,
 }
 
-impl TryFrom<&str> for ID {
+impl TryFrom<&str> for File {
     type Error = Error;
 
     fn try_from(src: &str) -> Result<Self> {
@@ -17,23 +17,23 @@ impl TryFrom<&str> for ID {
             None => return Err(anyhow!("unable to recognize the id.")),
         };
 
-        return Ok(ID {
+        return Ok(File {
             server_id: String::from(&cap[1]),
             file_id: String::from(&cap[2]),
         });
     }
 }
 
-impl TryFrom<String> for ID {
+impl TryFrom<String> for File {
     type Error = Error;
 
     fn try_from(src: String) -> Result<Self> {
-        let id = ID::try_from(src.as_str())?;
+        let id = File::try_from(src.as_str())?;
         return Ok(id);
     }
 }
 
-impl Into<String> for ID {
+impl Into<String> for File {
     fn into(self) -> String {
         let uri = format!(
             "https://www{}.zippyshare.com/v/{}/file.html",
@@ -57,57 +57,57 @@ mod tests {
     use super::*;
 
     #[test]
-    fn id_tryfrom_str() -> Result<()> {
+    fn file_tryfrom_str() -> Result<()> {
         struct TestCase<'a> {
             src: &'a str,
-            result: ID,
+            file: File,
         }
 
         let testcases = [TestCase {
             src: "https://www114.zippyshare.com/v/UfqlE33b/file.html",
-            result: ID {
+            file: File {
                 server_id: String::from("114"),
                 file_id: String::from("UfqlE33b"),
             },
         }];
 
         for testcase in testcases {
-            let result = ID::try_from(testcase.src)?;
-            assert_eq!(result, testcase.result);
+            let result = File::try_from(testcase.src)?;
+            assert_eq!(result, testcase.file);
         }
         Ok(())
     }
 
     #[test]
-    fn id_tryfrom_string() -> Result<()> {
+    fn file_tryfrom_string() -> Result<()> {
         struct TestCase {
             src: String,
-            result: ID,
+            file: File,
         }
 
         let testcases = [TestCase {
             src: String::from("https://www114.zippyshare.com/v/UfqlE33b/file.html"),
-            result: ID {
+            file: File {
                 server_id: String::from("114"),
                 file_id: String::from("UfqlE33b"),
             },
         }];
 
         for testcase in testcases {
-            let result = ID::try_from(testcase.src)?;
-            assert_eq!(result, testcase.result);
+            let file = File::try_from(testcase.src)?;
+            assert_eq!(file, testcase.file);
         }
         Ok(())
     }
     #[test]
     fn id_into_string() -> Result<()> {
         struct TestCase {
-            id: ID,
+            file: File,
             result: String,
         }
 
         let testcases = [TestCase {
-            id: ID {
+            file: File {
                 server_id: String::from("114"),
                 file_id: String::from("UfqlE33b"),
             },
@@ -115,7 +115,7 @@ mod tests {
         }];
 
         for testcase in testcases {
-            let result: String = testcase.id.into();
+            let result: String = testcase.file.into();
             assert_eq!(result, testcase.result);
         }
         Ok(())
