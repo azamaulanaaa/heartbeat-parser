@@ -7,28 +7,22 @@ use download::*;
 mod upload;
 use upload::*;
 
-use crate::FileHost;
+use crate::{Download, Service, Upload};
 use async_trait::async_trait;
 use futures::io::AsyncBufRead;
 
 pub struct Zippyshare {}
 
-pub struct UploadSetting {
-    pub private: bool,
-}
-
 pub struct DownloadSetting {}
 
-#[async_trait]
-impl FileHost for Zippyshare {
+impl Service for Zippyshare {
     type AuthToken = AuthToken;
     type File = File;
-    type UploadSetting = UploadSetting;
-    type DownloadSetting = DownloadSetting;
+}
 
-    fn max_file_size<'a>(_auth_token: &'a self::AuthToken) -> usize {
-        500 * 1000 * 1000
-    }
+#[async_trait]
+impl Download for Zippyshare {
+    type DownloadSetting = DownloadSetting;
 
     async fn download<'a>(
         file: Self::File,
@@ -36,6 +30,19 @@ impl FileHost for Zippyshare {
         _auth_token: &'a self::AuthToken,
     ) -> anyhow::Result<Box<dyn AsyncBufRead + Send + Sync + Unpin>> {
         download_file(file.get_server_id(), file.get_file_id()).await
+    }
+}
+
+pub struct UploadSetting {
+    pub private: bool,
+}
+
+#[async_trait]
+impl Upload for Zippyshare {
+    type UploadSetting = UploadSetting;
+
+    fn max_file_size<'a>(_auth_token: &'a self::AuthToken) -> usize {
+        500 * 1000 * 1000
     }
 
     async fn upload<'a>(

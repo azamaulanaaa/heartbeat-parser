@@ -1,4 +1,4 @@
-mod filehost;
-pub use filehost::FileHost;
-pub mod filehosts;
+mod service;
+pub use service::*;
+pub mod services;
 mod utils;

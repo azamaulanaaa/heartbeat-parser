@@ -1,19 +1,27 @@
 use async_trait::async_trait;
 use futures::AsyncBufRead;
 
-#[async_trait]
-pub trait FileHost {
+pub trait Service {
     type AuthToken;
     type File;
-    type UploadSetting;
+}
+
+#[async_trait]
+pub trait Download: Service {
     type DownloadSetting;
 
-    fn max_file_size<'a>(auth_token: &'a Self::AuthToken) -> usize;
     async fn download<'a>(
         file: Self::File,
         setting: Self::DownloadSetting,
         auth_token: &'a Self::AuthToken,
     ) -> anyhow::Result<Box<dyn AsyncBufRead + Send + Sync + Unpin>>;
+}
+
+#[async_trait]
+pub trait Upload: Service {
+    type UploadSetting;
+
+    fn max_file_size<'a>(auth_token: &'a Self::AuthToken) -> usize;
     async fn upload<'a>(
         name: &'a str,
         reader: Box<dyn AsyncBufRead + Send + Sync + Unpin>,
