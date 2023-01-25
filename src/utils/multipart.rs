@@ -69,8 +69,9 @@ impl<'a> Multipart<'a> {
                     );
                     let header_body = Body::from_string(header_str);
                     let data_body = Body::from_reader(reader, len);
+                    let separator_body = Body::from_string(String::from("\r\n"));
 
-                    header_body.chain(data_body)
+                    header_body.chain(data_body).chain(separator_body)
                 }
             };
 
@@ -110,6 +111,8 @@ pub fn gen_boundary<'a>(length: usize, charset: &'a str) -> anyhow::Result<Strin
 
 #[cfg(test)]
 mod test {
+    use async_std::io::Cursor;
+
     #[tokio::test]
     async fn multipart_into_body() -> anyhow::Result<()> {
         struct TestCase<'a> {
@@ -126,6 +129,25 @@ mod test {
                 "boundary",
             ),
             body_string: "--boundary\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\ncontent\r\n--boundary--",
+        }, TestCase {
+            args: (
+                super::Multipart::new(super::MultipartField {
+                    name: "name",
+                    data: super::MultipartContentEnum::String(String::from("content")),
+                }),
+                "boundary",
+            ),
+            body_string: "--boundary\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\ncontent\r\n--boundary--",
+
+        }, TestCase {
+            args: (
+                super::Multipart::new(super::MultipartField {
+                    name: "name",
+                    data: super::MultipartContentEnum::Reader(Box::new(Cursor::new("content")), "content.txt", Some(7)),
+                }),
+                "boundary",
+            ),
+            body_string: "--boundary\r\nContent-Disposition: form-data; name=\"name\"; filename=\"content.txt\"\r\n\r\ncontent\r\n--boundary--",
         }];
 
         for testcase in testcases {
