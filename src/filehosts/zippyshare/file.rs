@@ -3,8 +3,18 @@ use regex::Regex;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct File {
-    pub server_id: String,
-    pub file_id: String,
+    server_id: String,
+    file_id: String,
+}
+
+impl File {
+    pub fn get_server_id<'a>(&'a self) -> &'a str {
+        self.server_id.as_str()
+    }
+
+    pub fn get_file_id<'a>(&'a self) -> &'a str {
+        self.file_id.as_str()
+    }
 }
 
 impl TryFrom<&str> for File {

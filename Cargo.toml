@@ -11,4 +11,13 @@ crete-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0.68"
+async-std = { version = "1.12.0", features = ["async-io", "futures-io"] }
+async-trait = "0.1.61"
+futures = "0.3.25"
+http-types = { version = "2.12.0", features = ["cookies"] }
+rand = "0.8.5"
 regex = "1.7.1"
+serde = "1.0.152"
+sha256 = "1.1.1"
+surf = "2.3.2"
+tokio = { version = "1.24.2", features = ["macros", "rt-multi-thread"] }
