@@ -3,23 +3,22 @@ use futures::AsyncBufRead;
 
 #[async_trait]
 pub trait FileHost {
-    type Credential;
+    type AuthToken;
     type File;
     type UploadSetting;
     type DownloadSetting;
 
-    fn new(credntial: Self::Credential) -> Self;
-    fn max_file_size(&self) -> usize;
-    async fn download(
-        &self,
+    fn max_file_size<'a>(auth_token: &'a Self::AuthToken) -> usize;
+    async fn download<'a>(
         file: Self::File,
         setting: Self::DownloadSetting,
+        auth_token: &'a Self::AuthToken,
     ) -> anyhow::Result<Box<dyn AsyncBufRead + Send + Sync + Unpin>>;
     async fn upload<'a>(
-        &self,
         name: &'a str,
         reader: Box<dyn AsyncBufRead + Send + Sync + Unpin>,
         len: Option<usize>,
         setting: Self::UploadSetting,
+        auth_token: &'a Self::AuthToken,
     ) -> anyhow::Result<Self::File>;
 }

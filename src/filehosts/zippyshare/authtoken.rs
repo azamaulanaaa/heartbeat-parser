@@ -5,20 +5,20 @@ use surf::http::{Method, Url};
 use surf::{Client, Request, Response};
 
 #[derive(Clone)]
-pub struct Credential {
-    ziphash: String,
-    zipname: String,
+pub struct AuthToken {
+    pub ziphash: String,
+    pub zipname: String,
 }
 
-impl Credential {
-    pub fn empty() -> Credential {
-        Credential {
+impl AuthToken {
+    pub fn empty() -> AuthToken {
+        AuthToken {
             ziphash: String::from(""),
             zipname: String::from(""),
         }
     }
 
-    pub async fn new(form: CredentialForm<'_>) -> Result<Credential> {
+    pub async fn authenticate(credential: Credential<'_>) -> Result<AuthToken> {
         let client = Client::new();
         let mut cookiejar = CookieJar::new();
 
@@ -58,7 +58,7 @@ impl Credential {
                 let mut req = Request::builder(Method::Post, url)
                     .header("Cookie", cookie_string)
                     .build();
-                match req.body_form(&form) {
+                match req.body_form(&credential) {
                     Ok(_) => {}
                     Err(e) => return Err(e.into_inner()),
                 }
@@ -88,32 +88,24 @@ impl Credential {
             }
         }
 
-        return Ok(Credential {
+        return Ok(AuthToken {
             ziphash: cookiejar.get("ziphash").unwrap().value().to_string(),
             zipname: cookiejar.get("zipname").unwrap().value().to_string(),
         });
     }
-
-    pub fn get_ziphash<'a>(&'a self) -> &'a str {
-        self.ziphash.as_str()
-    }
-
-    pub fn get_zipname<'a>(&'a self) -> &'a str {
-        self.zipname.as_str()
-    }
 }
 
-pub struct CredentialForm<'a> {
+pub struct Credential<'a> {
     pub username: &'a str,
     pub password: &'a str,
 }
 
-impl Serialize for CredentialForm<'_> {
+impl Serialize for Credential<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut s = serializer.serialize_struct("CredentialForm", 2)?;
+        let mut s = serializer.serialize_struct("Credential", 2)?;
         s.serialize_field("login", &self.username)?;
         s.serialize_field("pass", &self.password)?;
         s.end()
@@ -125,20 +117,20 @@ mod test {
     #[tokio::test]
     async fn credential_new() -> anyhow::Result<()> {
         struct TestCase<'a> {
-            form: super::CredentialForm<'a>,
+            credential: super::Credential<'a>,
             status: bool,
         }
 
         let testcases = [
             TestCase {
-                form: super::CredentialForm {
+                credential: super::Credential {
                     username: "amhdevil",
                     password: "devil1234",
                 },
                 status: true,
             },
             TestCase {
-                form: super::CredentialForm {
+                credential: super::Credential {
                     username: "amhdevil",
                     password: "devil12345",
                 },
@@ -147,13 +139,13 @@ mod test {
         ];
 
         for testcase in testcases {
-            let credential = super::Credential::new(testcase.form).await;
+            let auth_token = super::AuthToken::authenticate(testcase.credential).await;
             if testcase.status {
-                let credential = credential?;
-                assert!(!credential.ziphash.is_empty());
-                assert!(!credential.zipname.is_empty());
+                let auth_token = auth_token?;
+                assert!(!auth_token.ziphash.is_empty());
+                assert!(!auth_token.zipname.is_empty());
             } else {
-                assert!(credential.is_err());
+                assert!(auth_token.is_err());
             }
         }
 
